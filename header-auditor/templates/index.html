@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Security Header Auditor</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: #0f172a; color: #f8fafc; min-height: 100vh; padding: 30px 15px; }
+        
+        .container { max-width: 800px; margin: 0 auto; }
+        
+        .header-title { text-align: center; margin-bottom: 25px; }
+        .header-title h1 { font-size: 26px; color: #f8fafc; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .header-title p { color: #94a3b8; font-size: 14px; margin-top: 6px; }
+
+        /* Card Form */
+        .card { background: #1e293b; border-radius: 16px; border: 1px solid #334155; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); margin-bottom: 25px; }
+        
+        .form-group { display: flex; gap: 10px; }
+        .form-group input { flex: 1; background: #0f172a; border: 1px solid #334155; padding: 14px 18px; border-radius: 12px; color: white; font-size: 14px; outline: none; }
+        .form-group input:focus { border-color: #38bdf8; box-shadow: 0 0 10px rgba(56, 189, 248, 0.2); }
+        
+        .btn-audit { background: linear-gradient(135deg, #0284c7, #2563eb); color: white; border: none; padding: 0 24px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
+        .btn-audit:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        /* Score Badge */
+        .score-card { display: flex; align-items: center; justify-content: space-between; background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .score-badge { font-size: 32px; font-weight: 800; padding: 10px 20px; border-radius: 12px; }
+        .grade-A { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #22c55e; }
+        .grade-B { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid #0284c7; }
+        .grade-C { background: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid #eab308; }
+        .grade-D, .grade-F { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
+
+        /* Table Results */
+        .result-item { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 16px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px; }
+        .result-header { display: flex; justify-content: space-between; align-items: center; }
+        .header-name { font-weight: 600; font-size: 15px; color: #38bdf8; }
+        
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .badge-success { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid #22c55e; }
+        .badge-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid #ef4444; }
+
+        .desc { font-size: 13px; color: #94a3b8; }
+        .val-code { font-family: monospace; font-size: 12px; background: #1e293b; padding: 6px 10px; border-radius: 6px; color: #cbd5e1; word-break: break-all; }
+
+        .alert-error { background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #f87171; padding: 14px; border-radius: 12px; margin-bottom: 20px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-title">
+        <h1><i class="fa-solid fa-shield-halved" style="color: #38bdf8;"></i> HTTP Security Header Auditor</h1>
+        <p>Alat Analisis Konfigurasi Keamanan Web Server berdasarkan Standar OWASP</p>
+    </div>
+
+    <div class="card">
+        <form method="POST">
+            <div class="form-group">
+                <input type="text" name="target_url" placeholder="Masukkan URL Target (contoh: github.com atau localhost:5000)" value="{{ target }}" required>
+                <button type="submit" class="btn-audit"><i class="fa-solid fa-magnifying-glass"></i> Audit</button>
+            </div>
+        </form>
+    </div>
+
+    {% if error %}
+        <div class="alert-error"><i class="fa-solid fa-circle-exclamation"></i> {{ error }}</div>
+    {% endif %}
+
+    {% if results %}
+        <div class="score-card">
+            <div>
+                <h3 style="font-size: 16px; color: #94a3b8;">Hasil Audit untuk:</h3>
+                <p style="font-size: 18px; font-weight: 600; color: #f8fafc;">{{ target }}</p>
+            </div>
+            <div style="text-align: right;">
+                <div class="score-badge grade-{{ grade }}">Grade {{ grade }} ({{ score }}%)</div>
+            </div>
+        </div>
+
+        {% for item in results %}
+            <div class="result-item">
+                <div class="result-header">
+                    <span class="header-name">{{ item.name }}</span>
+                    {% if item.status %}
+                        <span class="badge badge-success"><i class="fa-solid fa-check"></i> Terpasang</span>
+                    {% else %}
+                        <span class="badge badge-danger"><i class="fa-solid fa-xmark"></i> Tidak Ditemukan</span>
+                    {% endif %}
+                </div>
+                <div class="desc">{{ item.desc }}</div>
+                <div class="val-code"><strong>Response:</strong> {{ item.value }}</div>
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+</body>
+</html>
